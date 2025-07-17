@@ -2,80 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Writers App - Project Organizer</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Writer's Project Organizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex">
+<body class="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen p-6 text-white font-sans">
 
-  <!-- Sidebar -->
-  <aside class="w-64 bg-white shadow-lg p-4 overflow-y-auto">
-    <h2 class="text-lg font-bold mb-4">📚 My Projects</h2>
-    <ul id="projectList" class="space-y-2">
-      <!-- Projects will appear here -->
-    </ul>
-    <button onclick="createProject()" class="mt-4 w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">+ New Project</button>
-  </aside>
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center text-white">📚 Writer's Project Organizer</h1>
 
-  <!-- Main Area -->
-  <main class="flex-1 p-6">
-    <div id="projectView" class="hidden">
-      <h2 class="text-2xl font-bold mb-2" id="projectTitle">Project Title</h2>
-      <textarea id="projectNotes" class="w-full h-64 p-3 border rounded bg-white text-gray-800 focus:outline-none focus:ring" placeholder="Project notes..."></textarea>
-      <button onclick="saveProject()" class="mt-4 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Save Notes</button>
+    <!-- Project Form -->
+    <form id="projectForm" class="bg-white/10 backdrop-blur p-6 rounded-xl mb-6">
+      <label class="block mb-2 font-semibold">Project Title</label>
+      <input type="text" id="projectTitle" required placeholder="e.g. My Fantasy Novel"
+             class="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none"/>
+
+      <label class="block mb-2 font-semibold">Project Description</label>
+      <textarea id="projectDescription" rows="3" required placeholder="Short description..."
+                class="w-full p-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none"></textarea>
+
+      <button type="submit"
+              class="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg">
+        Add Project
+      </button>
+    </form>
+
+    <!-- Projects List -->
+    <div id="projectsList" class="space-y-4">
+      <!-- Project cards will appear here -->
     </div>
-    <p id="placeholderText" class="text-gray-500 text-lg">Select or create a project to get started.</p>
-  </main>
+  </div>
 
   <script>
-    const projects = JSON.parse(localStorage.getItem('writerProjects')) || [];
-    let currentProjectIndex = null;
+    const form = document.getElementById('projectForm');
+    const titleInput = document.getElementById('projectTitle');
+    const descInput = document.getElementById('projectDescription');
+    const list = document.getElementById('projectsList');
+
+    // Load existing projects
+    let projects = JSON.parse(localStorage.getItem('writerProjects')) || [];
+    renderProjects();
+
+    // Add new project
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const project = {
+        id: Date.now(),
+        title: titleInput.value.trim(),
+        description: descInput.value.trim()
+      };
+      projects.push(project);
+      saveAndRender();
+      form.reset();
+    });
+
+    function saveAndRender() {
+      localStorage.setItem('writerProjects', JSON.stringify(projects));
+      renderProjects();
+    }
+
+    function deleteProject(id) {
+      projects = projects.filter(p => p.id !== id);
+      saveAndRender();
+    }
 
     function renderProjects() {
-      const list = document.getElementById('projectList');
       list.innerHTML = '';
-      projects.forEach((proj, index) => {
-        const li = document.createElement('li');
-        li.className = 'cursor-pointer px-3 py-2 bg-gray-200 rounded hover:bg-gray-300';
-        li.textContent = proj.title;
-        li.onclick = () => openProject(index);
-        list.appendChild(li);
+      if (projects.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-center">No projects yet.</p>';
+        return;
+      }
+
+      projects.forEach(project => {
+        const div = document.createElement('div');
+        div.className = "bg-white/10 p-4 rounded-lg shadow text-white";
+
+        div.innerHTML = `
+          <h3 class="text-lg font-bold">${project.title}</h3>
+          <p class="text-sm text-gray-300 mb-2">${project.description}</p>
+          <button onclick="deleteProject(${project.id})"
+                  class="text-red-400 hover:text-red-500 text-sm">Delete</button>
+        `;
+        list.appendChild(div);
       });
     }
-
-    function createProject() {
-      const title = prompt('Enter project title');
-      if (title) {
-        projects.push({ title, notes: '' });
-        localStorage.setItem('writerProjects', JSON.stringify(projects));
-        renderProjects();
-      }
-    }
-
-    function openProject(index) {
-      currentProjectIndex = index;
-      const project = projects[index];
-      document.getElementById('projectTitle').textContent = project.title;
-      document.getElementById('projectNotes').value = project.notes;
-      document.getElementById('projectView').classList.remove('hidden');
-      document.getElementById('placeholderText').classList.add('hidden');
-    }
-
-    function saveProject() {
-      if (currentProjectIndex !== null) {
-        projects[currentProjectIndex].notes = document.getElementById('projectNotes').value;
-        localStorage.setItem('writerProjects', JSON.stringify(projects));
-        alert('Project saved!');
-      }
-    }
-
-    renderProjects();
   </script>
-
 </body>
 </html>
